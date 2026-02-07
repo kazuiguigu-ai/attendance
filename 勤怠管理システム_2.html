@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤怠管理システム</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            background: linear-gradient(135deg, #1E2761 0%, #0D1B3E 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #1E2761;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header .user-info {
+            color: #64748B;
+            font-size: 14px;
+        }
+
+        .clock-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .current-time {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .current-time .date {
+            color: #64748B;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .current-time .time {
+            color: #1E2761;
+            font-size: 48px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .clock-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .clock-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .clock-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .clock-btn.start {
+            background: #10B981;
+        }
+
+        .clock-btn.start:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .clock-btn.end {
+            background: #EF4444;
+        }
+
+        .clock-btn.end:hover:not(:disabled) {
+            background: #DC2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .clock-btn.break-start {
+            background: #F59E0B;
+        }
+
+        .clock-btn.break-start:hover:not(:disabled) {
+            background: #D97706;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .clock-btn.break-end {
+            background: #0891B2;
+        }
+
+        .clock-btn.break-end:hover:not(:disabled) {
+            background: #0E7490;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+        }
+
+        .status-display {
+            background: #F1F5F9;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .status-display .label {
+            color: #64748B;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .status-display .value {
+            color: #1E2761;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .status-badge.working {
+            background: #DCFCE7;
+            color: #166534;
+        }
+
+        .status-badge.break {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-badge.off {
+            background: #F1F5F9;
+            color: #475569;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #1E2761;
+            font-size: 20px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .stat-item {
+            background: #F8FAFC;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #0891B2;
+        }
+
+        .stat-item .label {
+            color: #64748B;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .stat-item .value {
+            color: #1E2761;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stat-item .unit {
+            color: #64748B;
+            font-size: 14px;
+            margin-left: 4px;
+        }
+
+        .record-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .record-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .record-item:last-child {
+            border-bottom: none;
+        }
+
+        .record-date {
+            color: #1E2761;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .record-details {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #64748B;
+        }
+
+        .record-time {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .record-total {
+            color: #0891B2;
+            font-weight: 600;
+        }
+
+        .warning {
+            background: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .warning-text {
+            color: #92400E;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #64748B;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #1E2761;
+            border-bottom-color: #0891B2;
+        }
+
+        .tab:hover {
+            color: #1E2761;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94A3B8;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .clock-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .current-time .time {
+                font-size: 36px;
+            }
+        }
+
+        .manual-entry {
+            background: #F8FAFC;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .manual-entry h3 {
+            color: #1E2761;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #64748B;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #0891B2;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background: #0891B2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #0E7490;
+        }
+
+        .data-management {
+            background: #F8FAFC;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .data-management h3 {
+            color: #1E2761;
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .export-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .data-btn {
+            padding: 10px 16px;
+            border: 1px solid #CBD5E1;
+            background: white;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .data-btn:hover {
+            background: #F1F5F9;
+            border-color: #0891B2;
+            color: #0891B2;
+        }
+
+        .data-btn.export {
+            color: #0891B2;
+        }
+
+        .data-btn.import {
+            color: #10B981;
+        }
+
+        .data-btn.clear {
+            color: #EF4444;
+        }
+
+        .data-btn.clear:hover {
+            background: #FEE2E2;
+            border-color: #EF4444;
+        }
+
+        .storage-info {
+            margin-top: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #64748B;
+        }
+
+        .storage-info strong {
+            color: #1E2761;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .data-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .export-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function AttendanceSystem() {
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [status, setStatus] = useState('off'); // off, working, break
+            const [todayRecord, setTodayRecord] = useState(null);
+            const [allRecords, setAllRecords] = useState([]);
+            const [activeTab, setActiveTab] = useState('today');
+            const fileInputRef = useRef(null);
+
+            // 現在時刻を更新
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentTime(new Date());
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            // ローカルストレージから記録を読み込み
+            useEffect(() => {
+                const saved = localStorage.getItem('attendanceRecords');
+                if (saved) {
+                    const records = JSON.parse(saved);
+                    setAllRecords(records);
+                    
+                    // 今日の記録を探す
+                    const today = formatDate(new Date());
+                    const todayRec = records.find(r => r.date === today);
+                    if (todayRec) {
+                        setTodayRecord(todayRec);
+                        // ステータスを復元
+                        if (todayRec.endTime) {
+                            setStatus('off');
+                        } else if (todayRec.breaks && todayRec.breaks[todayRec.breaks.length - 1]?.end === null) {
+                            setStatus('break');
+                        } else if (todayRec.startTime) {
+                            setStatus('working');
+                        }
+                    }
+                }
+            }, []);
+
+            // 記録を保存
+            const saveRecords = (records) => {
+                localStorage.setItem('attendanceRecords', JSON.stringify(records));
+                setAllRecords(records);
+            };
+
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const formatTime = (date) => {
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${hours}:${minutes}`;
+            };
+
+            const getDayOfWeek = (date) => {
+                const days = ['日', '月', '火', '水', '木', '金', '土'];
+                return days[date.getDay()];
+            };
+
+            // 出勤打刻
+            const clockIn = () => {
+                const now = new Date();
+                const today = formatDate(now);
+                const time = formatTime(now);
+
+                const newRecord = {
+                    date: today,
+                    startTime: time,
+                    endTime: null,
+                    breaks: [],
+                    totalWorkMinutes: 0,
+                    totalBreakMinutes: 0
+                };
+
+                setTodayRecord(newRecord);
+                setStatus('working');
+
+                const updatedRecords = [newRecord, ...allRecords.filter(r => r.date !== today)];
+                saveRecords(updatedRecords);
+            };
+
+            // 退勤打刻
+            const clockOut = () => {
+                if (!todayRecord) return;
+
+                const now = new Date();
+                const time = formatTime(now);
+
+                const updated = {
+                    ...todayRecord,
+                    endTime: time
+                };
+
+                // 休憩中の場合は自動で休憩終了
+                if (status === 'break') {
+                    const breaks = [...updated.breaks];
+                    breaks[breaks.length - 1].end = time;
+                    updated.breaks = breaks;
+                }
+
+                // 合計時間を計算
+                updated.totalWorkMinutes = calculateWorkMinutes(updated);
+                updated.totalBreakMinutes = calculateBreakMinutes(updated);
+
+                setTodayRecord(updated);
+                setStatus('off');
+
+                const updatedRecords = [updated, ...allRecords.filter(r => r.date !== updated.date)];
+                saveRecords(updatedRecords);
+            };
+
+            // 休憩開始
+            const startBreak = () => {
+                if (!todayRecord) return;
+
+                const now = new Date();
+                const time = formatTime(now);
+
+                const updated = {
+                    ...todayRecord,
+                    breaks: [...todayRecord.breaks, { start: time, end: null }]
+                };
+
+                setTodayRecord(updated);
+                setStatus('break');
+
+                const updatedRecords = [updated, ...allRecords.filter(r => r.date !== updated.date)];
+                saveRecords(updatedRecords);
+            };
+
+            // 休憩終了
+            const endBreak = () => {
+                if (!todayRecord || !todayRecord.breaks.length) return;
+
+                const now = new Date();
+                const time = formatTime(now);
+
+                const breaks = [...todayRecord.breaks];
+                breaks[breaks.length - 1].end = time;
+
+                const updated = {
+                    ...todayRecord,
+                    breaks
+                };
+
+                setTodayRecord(updated);
+                setStatus('working');
+
+                const updatedRecords = [updated, ...allRecords.filter(r => r.date !== updated.date)];
+                saveRecords(updatedRecords);
+            };
+
+            // 労働時間を計算（分）
+            const calculateWorkMinutes = (record) => {
+                if (!record.startTime) return 0;
+
+                const start = timeToMinutes(record.startTime);
+                const end = record.endTime ? timeToMinutes(record.endTime) : timeToMinutes(formatTime(new Date()));
+                
+                let totalWork = end - start;
+                
+                // 休憩時間を引く
+                const breakTime = calculateBreakMinutes(record);
+                totalWork -= breakTime;
+
+                return Math.max(0, totalWork);
+            };
+
+            // 休憩時間を計算（分）
+            const calculateBreakMinutes = (record) => {
+                if (!record.breaks || record.breaks.length === 0) return 0;
+
+                let total = 0;
+                record.breaks.forEach(b => {
+                    if (b.start && b.end) {
+                        const start = timeToMinutes(b.start);
+                        const end = timeToMinutes(b.end);
+                        total += (end - start);
+                    }
+                });
+
+                return total;
+            };
+
+            // 時刻を分に変換
+            const timeToMinutes = (timeStr) => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+
+            // 分を時間表記に変換
+            const minutesToHours = (minutes) => {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return `${hours}時間${mins}分`;
+            };
+
+            // 今月の統計を計算
+            const getMonthlyStats = () => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+
+                const monthRecords = allRecords.filter(r => {
+                    const recordDate = new Date(r.date);
+                    return recordDate.getFullYear() === year && recordDate.getMonth() === month;
+                });
+
+                const totalMinutes = monthRecords.reduce((sum, r) => sum + (r.totalWorkMinutes || 0), 0);
+                const workDays = monthRecords.filter(r => r.endTime).length;
+                const avgMinutes = workDays > 0 ? Math.floor(totalMinutes / workDays) : 0;
+
+                return {
+                    totalMinutes,
+                    workDays,
+                    avgMinutes
+                };
+            };
+
+            const monthlyStats = getMonthlyStats();
+
+            // 時間外労働の警告チェック
+            const checkOvertime = () => {
+                if (!todayRecord) return null;
+                
+                const workMinutes = calculateWorkMinutes(todayRecord);
+                const workHours = workMinutes / 60;
+
+                if (workHours > 8) {
+                    return `本日の労働時間が8時間を超えています（${minutesToHours(workMinutes)}）`;
+                }
+
+                // 月の時間外をチェック
+                const monthlyHours = monthlyStats.totalMinutes / 60;
+                if (monthlyHours > 160) { // 月40時間 × 4週 = 160時間の基準労働時間
+                    const overtime = monthlyHours - 160;
+                    if (overtime > 45) {
+                        return `今月の時間外労働が45時間を超える見込みです`;
+                    }
+                }
+
+                return null;
+            };
+
+            const warning = checkOvertime();
+
+            // データをJSON形式でエクスポート
+            const exportData = () => {
+                const dataStr = JSON.stringify(allRecords, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `勤怠記録_${formatDate(new Date())}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                alert('JSONデータをエクスポートしました');
+            };
+
+            // データをCSV形式でエクスポート（Excel用）
+            const exportCSV = () => {
+                if (allRecords.length === 0) {
+                    alert('エクスポートするデータがありません');
+                    return;
+                }
+
+                // CSVヘッダー
+                let csv = '\uFEFF'; // BOM（UTF-8でExcelで正しく開くために必要）
+                csv += '日付,曜日,出勤時刻,退勤時刻,労働時間（時間）,労働時間（分）,休憩時間（時間）,休憩時間（分）,休憩回数,備考\n';
+
+                // データ行を追加
+                allRecords.forEach(record => {
+                    const date = new Date(record.date);
+                    const dayOfWeek = getDayOfWeek(date);
+                    const workMinutes = record.totalWorkMinutes || calculateWorkMinutes(record);
+                    const breakMinutes = record.totalBreakMinutes || calculateBreakMinutes(record);
+                    const workHours = Math.floor(workMinutes / 60);
+                    const workMins = workMinutes % 60;
+                    const breakHours = Math.floor(breakMinutes / 60);
+                    const breakMins = breakMinutes % 60;
+                    
+                    // 休憩回数
+                    const breakCount = record.breaks ? record.breaks.length : 0;
+                    
+                    // 備考（休憩の詳細）
+                    let notes = '';
+                    if (record.breaks && record.breaks.length > 0) {
+                        notes = record.breaks.map((b, i) => 
+                            `休憩${i + 1}: ${b.start}-${b.end || '未終了'}`
+                        ).join('; ');
+                    }
+                    
+                    csv += `${record.date},${dayOfWeek},${record.startTime || ''},${record.endTime || ''},`;
+                    csv += `${workHours},${workMins},${breakHours},${breakMins},${breakCount},"${notes}"\n`;
+                });
+
+                // ダウンロード
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `勤怠記録_${formatDate(new Date())}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                alert('CSVファイルをエクスポートしました\nExcelで開くことができます');
+            };
+
+            // データをExcel用の詳細CSV形式でエクスポート
+            const exportDetailedCSV = () => {
+                if (allRecords.length === 0) {
+                    alert('エクスポートするデータがありません');
+                    return;
+                }
+
+                // CSVヘッダー
+                let csv = '\uFEFF'; // BOM
+                csv += '日付,曜日,出勤時刻,退勤時刻,総労働時間,休憩時間,実労働時間,時間外労働,深夜労働,休日労働\n';
+
+                // 月次サマリー用のデータ
+                const monthlyData = {};
+
+                allRecords.forEach(record => {
+                    const date = new Date(record.date);
+                    const dayOfWeek = getDayOfWeek(date);
+                    const workMinutes = record.totalWorkMinutes || calculateWorkMinutes(record);
+                    const breakMinutes = record.totalBreakMinutes || calculateBreakMinutes(record);
+                    
+                    // 総労働時間（休憩含む）
+                    const totalMinutes = workMinutes + breakMinutes;
+                    
+                    // 時間外労働（8時間超過分）
+                    const overtimeMinutes = Math.max(0, workMinutes - 480);
+                    
+                    // 月次データの集計
+                    const yearMonth = record.date.substring(0, 7);
+                    if (!monthlyData[yearMonth]) {
+                        monthlyData[yearMonth] = {
+                            workDays: 0,
+                            totalWork: 0,
+                            totalOvertime: 0
+                        };
+                    }
+                    if (record.endTime) {
+                        monthlyData[yearMonth].workDays++;
+                        monthlyData[yearMonth].totalWork += workMinutes;
+                        monthlyData[yearMonth].totalOvertime += overtimeMinutes;
+                    }
+                    
+                    // フォーマット関数
+                    const formatMinutes = (mins) => {
+                        const h = Math.floor(mins / 60);
+                        const m = mins % 60;
+                        return `${h}:${String(m).padStart(2, '0')}`;
+                    };
+                    
+                    csv += `${record.date},${dayOfWeek},${record.startTime || ''},${record.endTime || ''},`;
+                    csv += `${formatMinutes(totalMinutes)},${formatMinutes(breakMinutes)},`;
+                    csv += `${formatMinutes(workMinutes)},${formatMinutes(overtimeMinutes)},0:00,0:00\n`;
+                });
+
+                // 月次サマリーを追加
+                csv += '\n月次サマリー\n';
+                csv += '年月,出勤日数,総労働時間,時間外労働,平均労働時間\n';
+                
+                Object.keys(monthlyData).sort().reverse().forEach(yearMonth => {
+                    const data = monthlyData[yearMonth];
+                    const avgMinutes = data.workDays > 0 ? Math.floor(data.totalWork / data.workDays) : 0;
+                    
+                    const formatMinutes = (mins) => {
+                        const h = Math.floor(mins / 60);
+                        const m = mins % 60;
+                        return `${h}:${String(m).padStart(2, '0')}`;
+                    };
+                    
+                    csv += `${yearMonth},${data.workDays},${formatMinutes(data.totalWork)},`;
+                    csv += `${formatMinutes(data.totalOvertime)},${formatMinutes(avgMinutes)}\n`;
+                });
+
+                // ダウンロード
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `勤怠記録_詳細_${formatDate(new Date())}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                alert('詳細CSVファイルをエクスポートしました\n月次サマリー付きでExcelで開けます');
+            };
+
+            // データをインポート（JSONファイルから読み込み）
+            const importData = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedRecords = JSON.parse(e.target.result);
+                        
+                        // データの妥当性チェック
+                        if (!Array.isArray(importedRecords)) {
+                            alert('無効なデータ形式です');
+                            return;
+                        }
+
+                        // 確認ダイアログ
+                        const confirm = window.confirm(
+                            `${importedRecords.length}件の記録をインポートします。\n既存のデータは上書きされます。よろしいですか？`
+                        );
+
+                        if (confirm) {
+                            saveRecords(importedRecords);
+                            
+                            // 今日の記録を更新
+                            const today = formatDate(new Date());
+                            const todayRec = importedRecords.find(r => r.date === today);
+                            setTodayRecord(todayRec || null);
+                            
+                            // ステータスを更新
+                            if (todayRec) {
+                                if (todayRec.endTime) {
+                                    setStatus('off');
+                                } else if (todayRec.breaks && todayRec.breaks[todayRec.breaks.length - 1]?.end === null) {
+                                    setStatus('break');
+                                } else if (todayRec.startTime) {
+                                    setStatus('working');
+                                }
+                            } else {
+                                setStatus('off');
+                            }
+
+                            alert('データをインポートしました');
+                        }
+                    } catch (error) {
+                        alert('ファイルの読み込みに失敗しました: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+                
+                // ファイル選択をリセット
+                event.target.value = '';
+            };
+
+            // データをクリア
+            const clearData = () => {
+                const confirm = window.confirm(
+                    'すべての勤怠記録を削除します。\nこの操作は取り消せません。本当によろしいですか？'
+                );
+
+                if (confirm) {
+                    const doubleConfirm = window.confirm(
+                        '本当に削除しますか？\nバックアップを取っていない場合、データは復元できません。'
+                    );
+
+                    if (doubleConfirm) {
+                        localStorage.removeItem('attendanceRecords');
+                        setAllRecords([]);
+                        setTodayRecord(null);
+                        setStatus('off');
+                        alert('すべてのデータを削除しました');
+                    }
+                }
+            };
+
+            // ファイル選択ダイアログを開く
+            const triggerFileInput = () => {
+                fileInputRef.current?.click();
+            };
+
+            // ローカルストレージの使用状況を取得
+            const getStorageInfo = () => {
+                const dataStr = JSON.stringify(allRecords);
+                const bytes = new Blob([dataStr]).size;
+                const kb = (bytes / 1024).toFixed(2);
+                return {
+                    records: allRecords.length,
+                    size: kb
+                };
+            };
+
+            const storageInfo = getStorageInfo();
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>勤怠管理システム</h1>
+                        <div className="user-info">
+                            西日本高速道路メンテナンス関西株式会社
+                        </div>
+                    </div>
+
+                    <div className="clock-section">
+                        <div className="current-time">
+                            <div className="date">
+                                {currentTime.getFullYear()}年{currentTime.getMonth() + 1}月{currentTime.getDate()}日（{getDayOfWeek(currentTime)}）
+                            </div>
+                            <div className="time">
+                                {formatTime(currentTime)}
+                            </div>
+                        </div>
+
+                        <div className="clock-buttons">
+                            <button 
+                                className="clock-btn start"
+                                onClick={clockIn}
+                                disabled={status !== 'off'}
+                            >
+                                出勤
+                            </button>
+                            <button 
+                                className="clock-btn end"
+                                onClick={clockOut}
+                                disabled={status === 'off'}
+                            >
+                                退勤
+                            </button>
+                            <button 
+                                className="clock-btn break-start"
+                                onClick={startBreak}
+                                disabled={status !== 'working'}
+                            >
+                                休憩開始
+                            </button>
+                            <button 
+                                className="clock-btn break-end"
+                                onClick={endBreak}
+                                disabled={status !== 'break'}
+                            >
+                                休憩終了
+                            </button>
+                        </div>
+
+                        <div className="status-display">
+                            <div className="label">現在のステータス</div>
+                            <div className="value">
+                                {status === 'working' && '勤務中'}
+                                {status === 'break' && '休憩中'}
+                                {status === 'off' && '退勤済み / 勤務前'}
+                            </div>
+                            <div className={`status-badge ${status}`}>
+                                {status === 'working' && '🟢 勤務中'}
+                                {status === 'break' && '🟡 休憩中'}
+                                {status === 'off' && '⚪ オフ'}
+                            </div>
+                        </div>
+
+                        {warning && (
+                            <div className="warning">
+                                <div className="warning-text">⚠️ {warning}</div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid-2">
+                        <div className="card">
+                            <h2>本日の勤務</h2>
+                            {todayRecord ? (
+                                <>
+                                    <div className="stat-grid">
+                                        <div className="stat-item">
+                                            <div className="label">出勤時刻</div>
+                                            <div className="value">{todayRecord.startTime || '--:--'}</div>
+                                        </div>
+                                        <div className="stat-item">
+                                            <div className="label">退勤時刻</div>
+                                            <div className="value">{todayRecord.endTime || '--:--'}</div>
+                                        </div>
+                                        <div className="stat-item">
+                                            <div className="label">労働時間</div>
+                                            <div className="value">
+                                                {Math.floor(calculateWorkMinutes(todayRecord) / 60)}
+                                                <span className="unit">時間</span>
+                                                {calculateWorkMinutes(todayRecord) % 60}
+                                                <span className="unit">分</span>
+                                            </div>
+                                        </div>
+                                        <div className="stat-item">
+                                            <div className="label">休憩時間</div>
+                                            <div className="value">
+                                                {Math.floor(calculateBreakMinutes(todayRecord) / 60)}
+                                                <span className="unit">時間</span>
+                                                {calculateBreakMinutes(todayRecord) % 60}
+                                                <span className="unit">分</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {todayRecord.breaks && todayRecord.breaks.length > 0 && (
+                                        <div style={{ marginTop: '16px', fontSize: '13px', color: '#64748B' }}>
+                                            <div style={{ marginBottom: '8px', fontWeight: '600' }}>休憩記録</div>
+                                            {todayRecord.breaks.map((b, i) => (
+                                                <div key={i} style={{ padding: '4px 0' }}>
+                                                    休憩{i + 1}: {b.start} - {b.end || '（休憩中）'}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="empty-state">
+                                    出勤打刻をしてください
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="card">
+                            <h2>今月の統計</h2>
+                            <div className="stat-grid">
+                                <div className="stat-item">
+                                    <div className="label">出勤日数</div>
+                                    <div className="value">
+                                        {monthlyStats.workDays}
+                                        <span className="unit">日</span>
+                                    </div>
+                                </div>
+                                <div className="stat-item">
+                                    <div className="label">総労働時間</div>
+                                    <div className="value">
+                                        {Math.floor(monthlyStats.totalMinutes / 60)}
+                                        <span className="unit">時間</span>
+                                    </div>
+                                </div>
+                                <div className="stat-item">
+                                    <div className="label">平均労働時間</div>
+                                    <div className="value">
+                                        {Math.floor(monthlyStats.avgMinutes / 60)}
+                                        <span className="unit">時間</span>
+                                        {monthlyStats.avgMinutes % 60}
+                                        <span className="unit">分</span>
+                                    </div>
+                                </div>
+                                <div className="stat-item">
+                                    <div className="label">時間外労働</div>
+                                    <div className="value">
+                                        {Math.max(0, Math.floor((monthlyStats.totalMinutes - 160 * 60) / 60))}
+                                        <span className="unit">時間</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <h2>勤務記録</h2>
+                        <div className="tabs">
+                            <button 
+                                className={`tab ${activeTab === 'today' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('today')}
+                            >
+                                今日
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'week' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('week')}
+                            >
+                                今週
+                            </button>
+                            <button 
+                                className={`tab ${activeTab === 'month' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('month')}
+                            >
+                                今月
+                            </button>
+                        </div>
+
+                        <div className="record-list">
+                            {(() => {
+                                const now = new Date();
+                                let filteredRecords = [];
+
+                                if (activeTab === 'today') {
+                                    filteredRecords = allRecords.filter(r => r.date === formatDate(now));
+                                } else if (activeTab === 'week') {
+                                    const weekAgo = new Date(now);
+                                    weekAgo.setDate(weekAgo.getDate() - 7);
+                                    filteredRecords = allRecords.filter(r => new Date(r.date) >= weekAgo);
+                                } else {
+                                    const year = now.getFullYear();
+                                    const month = now.getMonth();
+                                    filteredRecords = allRecords.filter(r => {
+                                        const recordDate = new Date(r.date);
+                                        return recordDate.getFullYear() === year && recordDate.getMonth() === month;
+                                    });
+                                }
+
+                                if (filteredRecords.length === 0) {
+                                    return <div className="empty-state">記録がありません</div>;
+                                }
+
+                                return filteredRecords.map(record => (
+                                    <div key={record.date} className="record-item">
+                                        <div className="record-date">
+                                            {record.date} ({getDayOfWeek(new Date(record.date))})
+                                        </div>
+                                        <div className="record-details">
+                                            <div className="record-time">
+                                                🕐 {record.startTime} - {record.endTime || '勤務中'}
+                                            </div>
+                                            <div className="record-total">
+                                                {minutesToHours(record.totalWorkMinutes || calculateWorkMinutes(record))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ));
+                            })()}
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <h2>データ管理</h2>
+                        
+                        <div className="data-management">
+                            <h3>📊 エクスポート（ダウンロード）</h3>
+                            
+                            <div className="export-buttons">
+                                <button className="data-btn export" onClick={exportCSV}>
+                                    📊 CSV (Excel用)
+                                </button>
+                                <button className="data-btn export" onClick={exportDetailedCSV}>
+                                    📈 詳細CSV (月次付)
+                                </button>
+                            </div>
+
+                            <h3 style={{ marginTop: '16px' }}>💾 バックアップ・復元</h3>
+                            
+                            <div className="data-buttons">
+                                <button className="data-btn export" onClick={exportData}>
+                                    📥 JSONエクスポート
+                                </button>
+                                <button className="data-btn import" onClick={triggerFileInput}>
+                                    📤 インポート
+                                </button>
+                            </div>
+
+                            <h3 style={{ marginTop: '16px' }}>🗑️ データ削除</h3>
+                            
+                            <button 
+                                className="data-btn clear" 
+                                onClick={clearData}
+                                style={{ width: '100%' }}
+                            >
+                                すべてのデータを削除
+                            </button>
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".json"
+                                onChange={importData}
+                            />
+
+                            <div className="storage-info">
+                                <div style={{ marginBottom: '8px' }}>
+                                    <strong>保存状況:</strong> {storageInfo.records}件の記録 ({storageInfo.size} KB)
+                                </div>
+                                <div style={{ fontSize: '12px', lineHeight: '1.6' }}>
+                                    ℹ️ <strong>データはブラウザ内に保存されています</strong><br/>
+                                    <br/>
+                                    📊 <strong>CSV (Excel用)</strong>: Excelで開ける基本的な勤怠データ<br/>
+                                    📈 <strong>詳細CSV</strong>: 時間外労働計算と月次サマリー付き<br/>
+                                    📥 <strong>JSONエクスポート</strong>: バックアップ用（インポート可能）<br/>
+                                    📤 <strong>インポート</strong>: JSONファイルからデータを復元<br/>
+                                    🗑️ <strong>データ削除</strong>: すべての記録を完全に削除
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<AttendanceSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>
